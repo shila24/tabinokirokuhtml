@@ -1,49 +1,178 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF表示</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF ビューア（1ページずつ表示）</title>
+
+  <!-- PDF.js 本体（cdnjs の CDN。GitHub Pages でもそのまま使えます） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
   <style>
     html, body {
-      height: 100%;
       margin: 0;
       padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f5f5f5;
+      color: #333;
     }
 
-    .pdf-container {
-      width: 100%;
-      height: 100vh; /* 画面いっぱいに表示 */
+    .viewer-wrapper {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .viewer-header {
+      padding: 8px 12px;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .viewer-header button {
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      background: #007aff;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .viewer-header button:disabled {
+      background: #cccccc;
+      cursor: default;
+    }
+
+    .viewer-header span {
+      margin-left: auto;
+      font-size: 14px;
+    }
+
+    .viewer-body {
+      flex: 1;
+      padding: 8px;
       display: flex;
       justify-content: center;
-      align-items: center;
-      background: #00000010;
+      align-items: flex-start;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
-    .pdf-frame {
+    #pdfContainer {
       width: 100%;
-      height: 100%;
-      border: none;
+      max-width: 900px; /* PC のときの最大幅 */
+      background: #e0e0e0;
+      padding: 8px;
+      box-sizing: border-box;
+      border-radius: 8px;
     }
 
-    /* スマホ向け（必要なら微調整可） */
-    @media (max-width: 600px) {
-      .pdf-container {
-        height: calc(100vh - 20px); /* iOSのUI被り防止 */
-      }
+    canvas {
+      width: 100% !important;  /* スマホでも横幅フィット */
+      height: auto !important;
+      display: block;
+      background: #fff;
+      border-radius: 4px;
     }
   </style>
 </head>
-
 <body>
-  <div class="pdf-container">
-    <iframe class="pdf-frame" src="sample.pdf"></iframe>
+  <div class="viewer-wrapper">
+    <div class="viewer-header">
+      <button id="prevPage">前のページ</button>
+      <button id="nextPage">次のページ</button>
+      <span id="pageInfo">ページ 1 / ?</span>
+    </div>
+
+    <div class="viewer-body">
+      <div id="pdfContainer">
+        <canvas id="pdfCanvas"></canvas>
+      </div>
+    </div>
   </div>
 
-  <!-- PDF 非対応ブラウザ用（古い Android など） -->
-  <p style="text-align:center; margin-top:10px;">
-    PDFを表示できない場合は <a href="sample.pdf">こちらからダウンロード</a>
-  </p>
+  <script>
+    // ==== 設定 ====
+    // GitHub Pages でも index.html と同じ場所に sample.pdf を置けば OK
+    const PDF_URL = "sample.pdf"; // 必要に応じてファイル名を変更
+
+    // ==== PDF.js の準備 ====
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+    // worker の場所（本体と同じ CDN、同じバージョンにする）
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    let pdfDoc = null;
+    let currentPage = 1;
+    const canvas = document.getElementById("pdfCanvas");
+    const ctx = canvas.getContext("2d");
+    const pageInfo = document.getElementById("pageInfo");
+    const prevBtn = document.getElementById("prevPage");
+    const nextBtn = document.getElementById("nextPage");
+    const container = document.getElementById("pdfContainer");
+
+    // ページ描画
+    async function renderPage(pageNum) {
+      const page = await pdfDoc.getPage(pageNum);
+
+      // 1.0 で viewport を取得
+      const viewport = page.getViewport({ scale: 1 });
+      const containerWidth = container.clientWidth;
+
+      // コンテナ幅に合わせたスケール
+      const scale = containerWidth / viewport.width;
+      const scaledViewport = page.getViewport({ scale });
+
+      canvas.width = scaledViewport.width;
+      canvas.height = scaledViewport.height;
+
+      const renderContext = {
+        canvasContext: ctx,
+        viewport: scaledViewport
+      };
+
+      await page.render(renderContext).promise;
+
+      pageInfo.textContent = `ページ ${pageNum} / ${pdfDoc.numPages}`;
+      prevBtn.disabled = pageNum <= 1;
+      nextBtn.disabled = pageNum >= pdfDoc.numPages;
+    }
+
+    // PDF 読み込み
+    pdfjsLib.getDocument(PDF_URL).promise.then(pdf => {
+      pdfDoc = pdf;
+      renderPage(currentPage);
+    }).catch(err => {
+      console.error("PDF 読み込みエラー:", err);
+      pageInfo.textContent = "PDF を読み込めませんでした。";
+    });
+
+    // ボタンイベント
+    prevBtn.addEventListener("click", () => {
+      if (currentPage <= 1) return;
+      currentPage--;
+      renderPage(currentPage);
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentPage >= pdfDoc.numPages) return;
+      currentPage++;
+      renderPage(currentPage);
+    });
+
+    // 画面回転やリサイズ時に再描画（スマホ対応）
+    window.addEventListener("resize", () => {
+      if (!pdfDoc) return;
+      renderPage(currentPage);
+    });
+  </script>
 </body>
 </html>
