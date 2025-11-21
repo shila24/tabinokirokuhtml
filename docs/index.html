@@ -381,36 +381,172 @@
             margin: 8px 0;
         }
 
+        /* タブレット向け (768px以下) */
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 30px 20px;
+            }
+
             .header-content {
                 flex-direction: column;
+                gap: 15px;
             }
 
             .header-icon {
-                width: 180px;
-                height: 180px;
+                width: 120px;
+                height: 120px;
             }
 
             .header-text h1 {
-                font-size: 2em;
+                font-size: 1.8em;
+            }
+
+            .header-text .subtitle {
+                font-size: 1em;
             }
 
             .content {
-                padding: 20px;
+                padding: 20px 15px;
+            }
+
+            .section {
+                margin-bottom: 30px;
+            }
+
+            .section-title {
+                font-size: 1.5em;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .section-icon {
+                font-size: 2em;
+            }
+
+            .story-box, .goal-box, .warning-box, .success-box, .fail-box {
+                padding: 15px;
+                font-size: 0.95em;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
             }
 
             .step {
-                padding-left: 70px;
+                padding: 15px 15px 15px 60px;
+                margin: 15px 0;
             }
 
             .step::before {
                 width: 35px;
                 height: 35px;
                 font-size: 1.2em;
+                left: 15px;
+            }
+
+            .step-title {
+                font-size: 1.1em;
             }
 
             .toc-list {
                 grid-template-columns: 1fr;
+            }
+
+            .rank-container {
+                gap: 10px;
+            }
+
+            .rank {
+                padding: 15px;
+                font-size: 0.9em;
+            }
+
+            .rank-medal {
+                font-size: 1.5em;
+            }
+
+            .qa-item {
+                padding: 15px;
+            }
+
+            .tips-list li {
+                padding: 12px 12px 12px 45px;
+                font-size: 0.9em;
+            }
+
+            .tips-list li::before {
+                font-size: 1.2em;
+                left: 12px;
+            }
+        }
+
+        /* スマホ向け (480px以下) */
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .header-icon {
+                width: 100px;
+                height: 100px;
+            }
+
+            .header-text h1 {
+                font-size: 1.5em;
+            }
+
+            .header-text .subtitle {
+                font-size: 0.9em;
+            }
+
+            .section-title {
+                font-size: 1.3em;
+            }
+
+            .content {
+                padding: 15px 10px;
+            }
+
+            .step {
+                padding-left: 55px;
+            }
+
+            .step::before {
+                width: 30px;
+                height: 30px;
+                font-size: 1em;
+                left: 12px;
+            }
+
+            .info-card .emoji {
+                font-size: 2em;
+            }
+
+            .goal-box {
+                font-size: 1em;
+                padding: 20px;
+            }
+
+            .story-box {
+                padding: 20px;
+            }
+
+            .warning-box, .success-box, .fail-box {
+                padding: 12px;
             }
         }
     </style>
@@ -446,7 +582,7 @@
             <!-- ストーリーと目的 -->
             <section class="section" id="story">
                 <h2 class="section-title">
-                    <img src="icon.png" alt="" style="width: 50px; height: 50px; object-fit: contain;">
+                    <span class="section-icon">📖</span>
                     ストーリーと目的
                 </h2>
                 <div class="story-box">
@@ -465,7 +601,7 @@
             <!-- ゲーム概要 -->
             <section class="section" id="overview">
                 <h2 class="section-title">
-                    <img src="icon.png" alt="" style="width: 50px; height: 50px; object-fit: contain;">
+                    <span class="section-icon">🎮</span>
                     ゲーム概要
                 </h2>
                 <div class="info-grid">
